@@ -11,7 +11,7 @@
             text-align: center;
             margin: 50px;
         }
-        input, textarea {
+        input, textarea, button {
             width: 80%;
             padding: 10px;
             margin: 10px;
@@ -26,6 +26,22 @@
             font-weight: bold;
             color: #333;
         }
+        .btn {
+            background-color: #ec6254;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        .btn:hover {
+            background-color: #ea4635;
+        }
+        .copy-btn {
+            background-color: #3fb7ac;
+        }
+        .copy-btn:hover {
+            background-color: #359188;
+        }
     </style>
 </head>
 <body>
@@ -33,6 +49,10 @@
     <textarea id="hinglishInput" placeholder="Type in Hinglish..." onkeyup="convertToHindi()" onkeydown="handleEnter(event)"></textarea>
     <p>Hindi Output:</p>
     <textarea id="hindiOutput" rows="3" readonly></textarea>
+    <br>
+    <button class="btn copy-btn" onclick="copyText()">Copy</button>
+    <button class="btn" onclick="clearFields()">Clear</button>
+    
 
     <script>
         function convertToHindi() {
@@ -47,7 +67,15 @@
                 .then(data => {
                     if (data[0] === "SUCCESS") {
                         let hindiText = data[1][0][1][0];
-                        hindiText = hindiText.replace(/\./g, "।"); // Replace "." with "।"
+
+                        // Replace "." with "।" (Hindi full stop)
+                        hindiText = hindiText.replace(/\./g, "।");
+
+                        // Keep numbers (0-9) as they are (Prevent conversion to Devanagari numerals)
+                        hindiText = hindiText.replace(/[०-९]/g, function (match) {
+                            return "0123456789"[match.charCodeAt(0) - 0x0966];
+                        });
+
                         document.getElementById("hindiOutput").value = hindiText;
                     }
                 })
@@ -56,10 +84,22 @@
 
         function handleEnter(event) {
             if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();  // Prevent default Enter behavior
-                document.getElementById("hinglishInput").value += "\n"; // Insert new line
-                convertToHindi(); // Update Hindi output
+                event.preventDefault();
+                document.getElementById("hinglishInput").value += "\n";
+                convertToHindi();
             }
+        }
+
+        function clearFields() {
+            document.getElementById("hinglishInput").value = "";
+            document.getElementById("hindiOutput").value = "";
+        }
+
+        function copyText() {
+            let hindiOutput = document.getElementById("hindiOutput");
+            hindiOutput.select();
+            document.execCommand("copy");
+            alert("Copied to clipboard!");
         }
     </script>
 </body>
