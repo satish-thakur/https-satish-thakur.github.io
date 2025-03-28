@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinglish to Hindi Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        input, textarea {
+            width: 80%;
+            padding: 10px;
+            margin: 10px;
+            font-size: 18px;
+        }
+        textarea {
+            height: 100px;
+            resize: none;
+        }
+        p {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h2>Hinglish to Hindi Converter</h2>
+    <textarea id="hinglishInput" placeholder="Type in Hinglish..." onkeyup="convertToHindi()" onkeydown="handleEnter(event)"></textarea>
+    <p>Hindi Output:</p>
+    <textarea id="hindiOutput" rows="3" readonly></textarea>
+
+    <script>
+        function convertToHindi() {
+            let text = document.getElementById("hinglishInput").value;
+            if (text.trim() === "") {
+                document.getElementById("hindiOutput").value = "";
+                return;
+            }
+
+            fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=hi-t-i0-und&num=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data[0] === "SUCCESS") {
+                        let hindiText = data[1][0][1][0];
+                        hindiText = hindiText.replace(/\./g, "।"); // Replace "." with "।"
+                        document.getElementById("hindiOutput").value = hindiText;
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+        }
+
+        function handleEnter(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();  // Prevent default Enter behavior
+                document.getElementById("hinglishInput").value += "\n"; // Insert new line
+                convertToHindi(); // Update Hindi output
+            }
+        }
+    </script>
+</body>
+</html>
