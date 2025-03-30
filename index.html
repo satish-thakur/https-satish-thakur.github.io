@@ -42,45 +42,76 @@
         .copy-btn:hover {
             background-color: #359188;
         }
+        .button-wrap {
+            width: 40%;
+            margin: 0 auto;
+            display: flex;
+        }
     </style>
 </head>
 <body>
-    <h2>Hinglish to Hindi Converter</h2>
-    <textarea id="hinglishInput" placeholder="Type in Hinglish..." onkeyup="convertToHindi()" onkeydown="handleEnter(event)"></textarea>
-    <p>Hindi Output:</p>
-    <textarea id="hindiOutput" rows="3" readonly></textarea>
+    <div class="heading">
+        <h2>Hinglish to Hindi Converter</h2>
+    </div>
+    <div class="hinglish-field">
+        <textarea id="hinglishInput" placeholder="Type in Hinglish..." onkeyup="convertToHindi()" onkeydown="handleEnter(event)"></textarea>
+    </div>
+    <div class="sub-heading">
+        <p>Hindi Output:</p>
+    </div>
+    <div class="hindi-output">
+        <textarea id="hindiOutput" rows="3" readonly></textarea>
+    </div>
     <br>
-    <button class="btn copy-btn" onclick="copyText()">Copy</button>
-    <button class="btn" onclick="clearFields()">Clear</button>
+    <div class="button-wrap">
+        <button class="btn copy-btn" onclick="copyText()">Copy</button>
+        <button class="btn" onclick="clearFields()">Clear</button>
+    </div>
     
 
     <script>
         function convertToHindi() {
-            let text = document.getElementById("hinglishInput").value;
-            if (text.trim() === "") {
-                document.getElementById("hindiOutput").value = "";
-                return;
-            }
+    let text = document.getElementById("hinglishInput").value;
+    if (text.trim() === "") {
+        document.getElementById("hindiOutput").value = "";
+        return;
+    }
 
-            fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=hi-t-i0-und&num=1`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data[0] === "SUCCESS") {
-                        let hindiText = data[1][0][1][0];
+    // Split text by comma
+    let textSegments = text.split(",");
 
-                        // Replace "." with "।" (Hindi full stop)
-                        hindiText = hindiText.replace(/\./g, "।");
+    let convertedSegments = textSegments.map(segment => {
+        return fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(segment.trim())}&itc=hi-t-i0-und&num=1`)
+            .then(response => response.json())
+            .then(data => {
+                if (data[0] === "SUCCESS") {
+                    let hindiText = data[1][0][1][0];
 
-                        // Keep numbers (0-9) as they are (Prevent conversion to Devanagari numerals)
-                        hindiText = hindiText.replace(/[०-९]/g, function (match) {
-                            return "0123456789"[match.charCodeAt(0) - 0x0966];
-                        });
+                    // Replace "." with "।" (Hindi full stop)
+                    hindiText = hindiText.replace(/\./g, "।");
 
-                        document.getElementById("hindiOutput").value = hindiText;
-                    }
-                })
-                .catch(error => console.error("Error:", error));
-        }
+                    // Keep numbers (0-9) unchanged
+                    hindiText = hindiText.replace(/[०-९]/g, function (match) {
+                        return "0123456789"[match.charCodeAt(0) - 0x0966];
+                    });
+
+                    return hindiText;
+                }
+                return segment; // Return original if API fails
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                return segment; // Return original on error
+            });
+    });
+
+    // Wait for all API requests to complete before updating output
+    Promise.all(convertedSegments).then(results => {
+        document.getElementById("hindiOutput").value = results.join(", ");
+    });
+}
+
+
 
         function handleEnter(event) {
             if (event.key === "Enter" && !event.shiftKey) {
